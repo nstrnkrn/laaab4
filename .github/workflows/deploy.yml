@@ -1,0 +1,38 @@
+name: 🚀 Deploy to GitHub Pages
+
+on:
+  release:
+    types: [published]    # Запуск при публикации релиза
+
+permissions:
+  contents: write         # Разрешаем пушить в gh-pages
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      # 1️⃣ Клонируем репозиторий
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0   # чтобы были видны теги
+
+      # 2️⃣ Определяем имя релиза (тег, например v1.0.0)
+      - name: Get release version
+        id: get_version
+        run: echo "VERSION=${GITHUB_REF_NAME}" >> $GITHUB_ENV
+
+      # 3️⃣ Создаём папку с версией и копируем туда файлы сайта
+      - name: Build versioned folder
+        run: |
+          mkdir -p "public/v${VERSION}"
+          cp -r index.html ru en "public/v${VERSION}/"
+
+      # 4️⃣ Публикуем в ветку gh-pages
+      - name: Deploy to gh-pages
+        uses: peaceiris/actions-gh-pages@v3
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./public
+          keep_files: true   # сохраняем предыдущие версии
